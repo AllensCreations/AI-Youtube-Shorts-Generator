@@ -37,7 +37,7 @@ fi
 cd "$INSTALL_DIR"
 
 # 2. System dependencies (ffmpeg, python3-venv, git)
-echo -e "\n${BOLD}[1/4] Checking system prerequisites (ffmpeg, python3)...${RESET}"
+echo -e "\n${BOLD}[1/5] Checking system prerequisites (ffmpeg, python3)...${RESET}"
 install_pkg() {
     if command -v apt-get >/dev/null 2>&1; then
         if [ "$EUID" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
@@ -64,7 +64,7 @@ else
 fi
 
 # 3. Python virtual environment & packages
-echo -e "\n${BOLD}[2/4] Setting up Python virtual environment...${RESET}"
+echo -e "\n${BOLD}[2/5] Setting up Python virtual environment...${RESET}"
 if [ ! -d "$INSTALL_DIR/venv" ]; then
     python3 -m venv "$INSTALL_DIR/venv"
 fi
@@ -84,8 +84,21 @@ fi
 "$VENV_PIP" uninstall -y hf-xet >/dev/null 2>&1 || true
 echo -e "${GREEN}✓ Python packages installed successfully.${RESET}"
 
-# 4. Configuration .env
-echo -e "\n${BOLD}[3/4] Configuring environment (.env)...${RESET}"
+# 4. Pre-cache Whisper base model
+echo -e "\n${BOLD}[3/5] Pre-caching Whisper base speech model (~145 MB)...${RESET}"
+"$VENV_PYTHON" -c "
+import sys
+try:
+    from faster_whisper import WhisperModel
+    print('  Downloading / verifying Whisper base model...')
+    WhisperModel('base', device='cpu', compute_type='int8')
+    print('  ✓ Whisper base model cached and ready!')
+except Exception as e:
+    print(f'  ⚠️ Warning: Pre-caching model skipped: {e}', file=sys.stderr)
+" || true
+
+# 5. Configuration .env
+echo -e "\n${BOLD}[4/5] Configuring environment (.env)...${RESET}"
 if [ ! -f "$INSTALL_DIR/.env" ] && [ -f "$INSTALL_DIR/.env.example" ]; then
     cp "$INSTALL_DIR/.env.example" "$INSTALL_DIR/.env"
     echo -e "${GREEN}✓ Created .env from .env.example${RESET}"
@@ -93,10 +106,15 @@ else
     echo -e "${GREEN}✓ .env already configured.${RESET}"
 fi
 
+# Ensure gemini-3.8-flash is active
+if [ -f "$INSTALL_DIR/.env" ]; then
+    sed -i 's/gemini-2.5-flash/gemini-3.8-flash/g' "$INSTALL_DIR/.env"
+fi
+
 mkdir -p "$INSTALL_DIR/output/jobs"
 
-# 5. Install global 'AI' CLI command
-echo -e "\n${BOLD}[4/4] Installing global 'AI' command...${RESET}"
+# 6. Install global 'AI' CLI command
+echo -e "\n${BOLD}[5/5] Installing global 'AI' command...${RESET}"
 chmod +x "$INSTALL_DIR/AI"
 
 # Create launcher wrapper pointing to this install directory
