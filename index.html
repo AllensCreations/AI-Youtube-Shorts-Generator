@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Shorts Studio — Admin Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            dark: {
+              950: '#07090e',
+              900: '#0c1017',
+              850: '#111722',
+              800: '#172030',
+              700: '#222f46',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0c1017; }
+    ::-webkit-scrollbar-thumb { background: #222f46; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334460; }
+    .glass-card {
+      background: rgba(17, 23, 34, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 35px -5px rgba(99, 102, 241, 0.35);
+    }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen font-sans selection:bg-brand-500 selection:text-white flex flex-col">
+
+  <!-- TOP HEADER / NAVBAR -->
+  <header class="border-b border-dark-800 bg-dark-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-brand-600 via-indigo-500 to-purple-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-lg tracking-tight text-white">AI Shorts Studio</h1>
+            <span class="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">Admin</span>
+          </div>
+          <p class="text-xs text-slate-400 font-medium hidden sm:block">YouTube to Viral 9:16 Shorts Generator</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <button id="tabBtnStudio" onclick="switchTab('studio')" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-brand-600/20 text-brand-400 border border-brand-500/30">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Studio</span>
+        </button>
+        <button id="tabBtnLibrary" onclick="switchTab('library')" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          <span>Library</span>
+          <span id="badgeLibraryCount" class="text-xs px-1.5 py-0.2 rounded-full bg-dark-700 text-slate-300">0</span>
+        </button>
+        <button id="tabBtnSettings" onclick="switchTab('settings')" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- Server Status Indicator -->
+      <div class="hidden lg:flex items-center gap-2 pl-4 border-l border-dark-800 text-xs">
+        <span class="flex h-2.5 w-2.5 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span id="serverStatusText" class="text-slate-300 font-mono">Localhost:5000</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: STUDIO (MAIN WORKSPACE)            -->
+    <!-- ========================================== -->
+    <div id="sectionStudio" class="space-y-8">
+      
+      <!-- TOP SECTION: URL INPUT & SOURCE PREVIEW -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: URL Input & Setup -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="glass-card rounded-2xl p-6 relative overflow-hidden shadow-2xl">
+            <div class="absolute -right-16 -top-16 w-48 h-48 bg-brand-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="flex items-center justify-between mb-4">
+              <label for="videoUrlInput" class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand-400" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
+                Source Video Link / URL
+              </label>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="pasteFromClipboard()" class="text-xs text-brand-400 hover:text-brand-300 font-medium px-2 py-1 rounded bg-brand-500/10 border border-brand-500/20 hover:bg-brand-500/20 transition">
+                  📋 Paste
+                </button>
+                <button type="button" onclick="clearUrlInput()" class="text-xs text-slate-400 hover:text-slate-300 font-medium px-2 py-1 rounded bg-dark-800 hover:bg-dark-700 transition">
+                  Clear
+                </button>
+              </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="relative">
+              <input
+                id="videoUrlInput"
+                type="text"
+                placeholder="https://www.youtube.com/watch?v=... or local /path/to/video.mp4"
+                class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-3.5 pl-11 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-sm font-mono transition-all"
+                oninput="onUrlChanged()"
+              />
+              <div class="absolute left-3.5 top-3.5 text-slate-500">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+              </div>
+            </div>
+
+            <!-- Quick samples -->
+            <div class="mt-3 flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+              <span class="text-slate-500">Quick Test:</span>
+              <button onclick="setSampleUrl('https://www.youtube.com/watch?v=kT1CO4BYV3A')" class="px-2 py-0.5 rounded bg-dark-800 hover:bg-dark-700 text-slate-300 transition">
+                SamurAI Demo (AI Image Gen)
+              </button>
+              <button onclick="setSampleUrl('https://www.youtube.com/watch?v=jNQXAC9IVRw')" class="px-2 py-0.5 rounded bg-dark-800 hover:bg-dark-700 text-slate-300 transition">
+                Me at the zoo
+              </button>
+            </div>
+
+            <!-- Generation Settings Grid -->
+            <div class="mt-6 pt-6 border-t border-dark-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              
+              <!-- Pipeline Mode -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Processing Mode</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button type="button" id="btnModeLocal" onclick="selectMode('local')" class="px-3 py-2.5 rounded-xl border text-left transition-all bg-brand-600/20 border-brand-500 text-white">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      Local Mode
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">Whisper + LLM + ffmpeg</div>
+                  </button>
+                  <button type="button" id="btnModeApi" onclick="selectMode('api')" class="px-3 py-2.5 rounded-xl border text-left transition-all border-dark-700 bg-dark-900/50 text-slate-400 hover:border-dark-600">
+                    <div class="font-bold text-xs flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                      API Mode
+                    </div>
+                    <div class="text-[10px] text-slate-400 mt-0.5">MuAPI Cloud Clipper</div>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Number of clips -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <label class="text-xs font-bold uppercase tracking-wider text-slate-400">Shorts to Generate</label>
+                  <span id="numClipsLabel" class="text-xs font-bold text-brand-400">3 Clips</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="setClipsCount(1)" class="clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold border-dark-700 bg-dark-900 text-slate-300 hover:border-brand-500">1</button>
+                  <button type="button" onclick="setClipsCount(2)" class="clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold border-dark-700 bg-dark-900 text-slate-300 hover:border-brand-500">2</button>
+                  <button type="button" onclick="setClipsCount(3)" class="clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold bg-brand-600/20 border-brand-500 text-brand-300">3</button>
+                  <button type="button" onclick="setClipsCount(5)" class="clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold border-dark-700 bg-dark-900 text-slate-300 hover:border-brand-500">5</button>
+                  <button type="button" onclick="setClipsCount(10)" class="clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold border-dark-700 bg-dark-900 text-slate-300 hover:border-brand-500">10</button>
+                </div>
+              </div>
+
+              <!-- Aspect Ratio -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Aspect Ratio</label>
+                <select id="selectAspectRatio" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-xs font-medium text-slate-200 focus:outline-none focus:border-brand-500">
+                  <option value="9:16" selected>📱 9:16 (TikTok / Shorts / Reels)</option>
+                  <option value="1:1">⬛ 1:1 (Square Feed)</option>
+                  <option value="16:9">🖥️ 16:9 (Landscape)</option>
+                </select>
+              </div>
+
+              <!-- Download Quality / Resolution -->
+              <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Source Resolution</label>
+                <select id="selectResolution" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-xs font-medium text-slate-200 focus:outline-none focus:border-brand-500">
+                  <option value="720" selected>720p (Fast & Crisp - Recommended)</option>
+                  <option value="1080">1080p (High Definition)</option>
+                  <option value="480">480p (Fastest)</option>
+                </select>
+              </div>
+
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-6 pt-6 border-t border-dark-800">
+              <button
+                id="btnGenerate"
+                type="button"
+                onclick="startGeneration()"
+                class="w-full py-4 rounded-xl font-extrabold text-sm tracking-wide uppercase transition-all flex items-center justify-center gap-3 bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:from-brand-500 hover:to-purple-500 text-white shadow-xl shadow-brand-600/30 glow-brand disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <svg class="w-5 h-5 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Generate Viral Shorts</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Right: Source Video Live Preview Card -->
+        <div class="lg:col-span-5">
+          <div class="glass-card rounded-2xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Source Video Preview
+              </h2>
+              <span id="previewStatusBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-dark-800 text-slate-400 border border-dark-700">Awaiting link</span>
+            </div>
+
+            <!-- Preview Container -->
+            <div id="previewContainer" class="aspect-video w-full rounded-xl bg-dark-900 border border-dark-800 flex flex-col items-center justify-center text-slate-500 overflow-hidden relative">
+              <div id="previewPlaceholder" class="text-center p-6 space-y-2">
+                <svg class="w-12 h-12 mx-auto text-slate-700 stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+                </svg>
+                <p class="text-xs text-slate-400">Paste a YouTube URL or direct video path to preview</p>
+              </div>
+              <!-- Embedded iframe / player injected dynamically -->
+              <div id="previewPlayerWrapper" class="w-full h-full hidden"></div>
+            </div>
+
+            <!-- Source metadata snippet -->
+            <div id="previewMeta" class="mt-4 p-3 rounded-xl bg-dark-900/60 border border-dark-800 text-xs space-y-1.5 hidden">
+              <div class="flex items-center justify-between text-slate-400">
+                <span>Video ID:</span>
+                <span id="metaVideoId" class="font-mono text-slate-200">-</span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400">
+                <span>Format:</span>
+                <span id="metaSourceFormat" class="font-mono text-slate-200">MP4</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- MIDDLE SECTION: ACTIVE JOB TRACKER & LIVE TERMINAL LOGS -->
+      <div id="sectionJobProgress" class="glass-card rounded-2xl p-6 shadow-2xl hidden space-y-6">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-3">
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="animate-spin inline-block h-4 w-4 border-2 border-brand-500 border-t-transparent rounded-full"></span>
+                Processing Video
+              </h2>
+              <span id="jobIdBadge" class="text-xs font-mono px-2 py-0.5 rounded bg-dark-800 text-brand-300 border border-dark-700">job_id</span>
+            </div>
+            <p id="jobStatusSubtitle" class="text-xs text-slate-400 mt-1">Downloading audio stream & transcribing segments...</p>
+          </div>
+
+          <!-- Progress Percentage & Stage -->
+          <div class="flex items-center gap-4">
+            <div class="text-right">
+              <div id="progressPercent" class="text-2xl font-black font-mono text-brand-400">0%</div>
+              <div id="elapsedTimer" class="text-[11px] font-mono text-slate-500">00:00 elapsed</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual 5-Step Pipeline Indicator -->
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+          <div id="stepDownload" class="p-2.5 rounded-xl border border-dark-700 bg-dark-900 transition-all text-slate-400">
+            <div class="text-base">📥</div>
+            <div class="font-semibold mt-1">1. Download</div>
+          </div>
+          <div id="stepWhisper" class="p-2.5 rounded-xl border border-dark-700 bg-dark-900 transition-all text-slate-400">
+            <div class="text-base">🎙️</div>
+            <div class="font-semibold mt-1">2. Whisper</div>
+          </div>
+          <div id="stepLlm" class="p-2.5 rounded-xl border border-dark-700 bg-dark-900 transition-all text-slate-400">
+            <div class="text-base">🧠</div>
+            <div class="font-semibold mt-1">3. Virality LLM</div>
+          </div>
+          <div id="stepCrop" class="p-2.5 rounded-xl border border-dark-700 bg-dark-900 transition-all text-slate-400">
+            <div class="text-base">✂️</div>
+            <div class="font-semibold mt-1">4. Reframe 9:16</div>
+          </div>
+          <div id="stepComplete" class="p-2.5 rounded-xl border border-dark-700 bg-dark-900 transition-all text-slate-400">
+            <div class="text-base">🎉</div>
+            <div class="font-semibold mt-1">5. Ready</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="w-full bg-dark-900 rounded-full h-2 overflow-hidden border border-dark-800">
+          <div id="progressBarFill" class="bg-gradient-to-r from-brand-600 via-indigo-500 to-purple-500 h-full w-0 transition-all duration-300"></div>
+        </div>
+
+        <!-- Live Terminal Logs Console -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-mono flex items-center gap-1.5">
+              <span class="h-2 w-2 rounded-full bg-brand-400"></span> Live Execution Terminal
+            </span>
+            <div class="flex items-center gap-2">
+              <label class="flex items-center gap-1 text-[11px] cursor-pointer">
+                <input type="checkbox" id="chkAutoScroll" checked class="rounded bg-dark-900 border-dark-700 text-brand-600">
+                Auto-scroll
+              </label>
+              <button onclick="clearConsoleLogs()" class="hover:text-slate-200">Clear</button>
+            </div>
+          </div>
+          <div id="consoleTerminal" class="h-44 bg-dark-950 border border-dark-800 rounded-xl p-3.5 font-mono text-[11px] text-slate-300 overflow-y-auto space-y-1">
+            <div class="text-slate-600">[system] Console ready. Logs will appear here in real-time...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM SECTION: GENERATED SHORTS SHOWCASE -->
+      <div id="sectionResults" class="space-y-6 hidden">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-800 pb-4">
+          <div>
+            <h2 class="text-xl font-extrabold text-white flex items-center gap-2.5">
+              <span class="p-1 rounded-lg bg-emerald-500/20 text-emerald-400">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              </span>
+              Generated Shorts Ready!
+            </h2>
+            <p id="resultsSubtitle" class="text-xs text-slate-400 mt-1">High virality candidates cropped and rendered.</p>
+          </div>
+          <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-xs font-semibold px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-200 border border-dark-700 transition">
+            Generate More Shorts ↑
+          </button>
+        </div>
+
+        <!-- Shorts Cards Grid -->
+        <div id="shortsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Short Cards dynamically rendered here -->
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: LIBRARY / PREVIOUS GENERATIONS     -->
+    <!-- ========================================== -->
+    <div id="sectionLibrary" class="space-y-6 hidden">
+      <div class="flex items-center justify-between border-b border-dark-800 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white">Clips Library & History</h2>
+          <p class="text-xs text-slate-400">All previously generated shorts and metadata stored in your output directory.</p>
+        </div>
+        <button onclick="loadHistory()" class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-xs font-semibold text-slate-300 border border-dark-700 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Refresh
+        </button>
+      </div>
+
+      <div id="libraryContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: SETTINGS & CONFIGURATION (.ENV)    -->
+    <!-- ========================================== -->
+    <div id="sectionSettings" class="max-w-3xl mx-auto space-y-6 hidden">
+      
+      <div class="glass-card rounded-2xl p-6 shadow-2xl space-y-6">
+        <div class="border-b border-dark-800 pb-4">
+          <h2 class="text-lg font-bold text-white">Studio Configuration</h2>
+          <p class="text-xs text-slate-400">Configure LLM providers and API keys stored in your local <code class="font-mono text-brand-400">.env</code> file.</p>
+        </div>
+
+        <form id="settingsForm" onsubmit="saveSettings(event)" class="space-y-5">
+          
+          <!-- LLM Provider Selection -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Local Mode LLM Provider</label>
+            <div class="grid grid-cols-2 gap-3">
+              <label class="flex items-center gap-3 p-3 rounded-xl border border-dark-700 bg-dark-900 cursor-pointer hover:border-brand-500">
+                <input type="radio" name="llm_provider" value="openai" checked class="text-brand-600 focus:ring-brand-500">
+                <div>
+                  <div class="text-xs font-bold text-slate-200">OpenAI</div>
+                  <div class="text-[10px] text-slate-400">GPT-4o-mini (Recommended)</div>
+                </div>
+              </label>
+              <label class="flex items-center gap-3 p-3 rounded-xl border border-dark-700 bg-dark-900 cursor-pointer hover:border-brand-500">
+                <input type="radio" name="llm_provider" value="gemini" class="text-brand-600 focus:ring-brand-500">
+                <div>
+                  <div class="text-xs font-bold text-slate-200">Google Gemini</div>
+                  <div class="text-[10px] text-slate-400">Gemini 2.5 Flash</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- OpenAI API Key -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">OpenAI API Key</label>
+            <input type="password" id="inputOpenAiKey" placeholder="sk-..." class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500" />
+            <p class="text-[11px] text-slate-500 mt-1">Used for highlight & virality detection in Local Mode.</p>
+          </div>
+
+          <!-- Gemini API Key -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Gemini API Key</label>
+            <input type="password" id="inputGeminiKey" placeholder="AIzaSy..." class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500" />
+            <p class="text-[11px] text-slate-500 mt-1">Used if LLM Provider is set to Gemini.</p>
+          </div>
+
+          <!-- MuAPI API Key -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">MuAPI Key (For API Mode)</label>
+            <input type="password" id="inputMuApiKey" placeholder="mu_..." class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-100 placeholder-slate-600 focus:outline-none focus:border-brand-500" />
+            <p class="text-[11px] text-slate-500 mt-1">Optional. Only needed if using cloud API mode.</p>
+          </div>
+
+          <!-- Whisper Model -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Local Whisper Model</label>
+            <select id="selectWhisperModel" class="w-full bg-dark-900 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+              <option value="base" selected>base (Default — Balanced speed & accuracy)</option>
+              <option value="tiny">tiny (Fastest, lowest RAM)</option>
+              <option value="small">small (Better accuracy)</option>
+              <option value="medium">medium (High accuracy)</option>
+              <option value="large-v3">large-v3 (Maximum precision)</option>
+            </select>
+          </div>
+
+          <div class="pt-4 border-t border-dark-800 flex items-center justify-between">
+            <span id="saveStatusMsg" class="text-xs text-emerald-400 font-medium hidden">Settings saved to .env successfully!</span>
+            <button type="submit" class="ml-auto px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs uppercase tracking-wider transition shadow-lg shadow-brand-600/30">
+              Save Settings
+            </button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    let currentMode = 'local';
+    let currentClipsCount = 3;
+    let activeJobId = null;
+    let jobPollTimer = null;
+    let jobStartTime = null;
+
+    // --- TAB SWITCHING ---
+    function switchTab(tab) {
+      document.getElementById('sectionStudio').classList.toggle('hidden', tab !== 'studio');
+      document.getElementById('sectionLibrary').classList.toggle('hidden', tab !== 'library');
+      document.getElementById('sectionSettings').classList.toggle('hidden', tab !== 'settings');
+
+      // Update button styling
+      const tabs = ['Studio', 'Library', 'Settings'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tabBtn${t}`);
+        const isActive = t.toLowerCase() === tab;
+        if (isActive) {
+          btn.className = 'px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-brand-600/20 text-brand-400 border border-brand-500/30';
+        } else {
+          btn.className = 'px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-dark-800';
+        }
+      });
+
+      if (tab === 'library') loadHistory();
+      if (tab === 'settings') loadConfig();
+    }
+
+    // --- MODE & CLIPS CONTROLS ---
+    function selectMode(mode) {
+      currentMode = mode;
+      const btnLocal = document.getElementById('btnModeLocal');
+      const btnApi = document.getElementById('btnModeApi');
+      if (mode === 'local') {
+        btnLocal.className = 'px-3 py-2.5 rounded-xl border text-left transition-all bg-brand-600/20 border-brand-500 text-white';
+        btnApi.className = 'px-3 py-2.5 rounded-xl border text-left transition-all border-dark-700 bg-dark-900/50 text-slate-400 hover:border-dark-600';
+      } else {
+        btnApi.className = 'px-3 py-2.5 rounded-xl border text-left transition-all bg-brand-600/20 border-brand-500 text-white';
+        btnLocal.className = 'px-3 py-2.5 rounded-xl border text-left transition-all border-dark-700 bg-dark-900/50 text-slate-400 hover:border-dark-600';
+      }
+    }
+
+    function setClipsCount(count) {
+      currentClipsCount = count;
+      document.getElementById('numClipsLabel').innerText = `${count} Clip${count > 1 ? 's' : ''}`;
+      document.querySelectorAll('.clip-pill').forEach(pill => {
+        if (pill.innerText === String(count)) {
+          pill.className = 'clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold bg-brand-600/20 border-brand-500 text-brand-300';
+        } else {
+          pill.className = 'clip-pill flex-1 py-1.5 rounded-lg border text-xs font-semibold border-dark-700 bg-dark-900 text-slate-300 hover:border-brand-500';
+        }
+      });
+    }
+
+    // --- URL INPUT & PREVIEW ---
+    function extractYouTubeId(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function onUrlChanged() {
+      const url = document.getElementById('videoUrlInput').value.trim();
+      const previewPlaceholder = document.getElementById('previewPlaceholder');
+      const playerWrapper = document.getElementById('previewPlayerWrapper');
+      const previewStatusBadge = document.getElementById('previewStatusBadge');
+      const previewMeta = document.getElementById('previewMeta');
+      const metaVideoId = document.getElementById('metaVideoId');
+
+      if (!url) {
+        previewPlaceholder.classList.remove('hidden');
+        playerWrapper.classList.add('hidden');
+        playerWrapper.innerHTML = '';
+        previewStatusBadge.innerText = 'Awaiting link';
+        previewStatusBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded-full bg-dark-800 text-slate-400 border border-dark-700';
+        previewMeta.classList.add('hidden');
+        return;
+      }
+
+      const ytId = extractYouTubeId(url);
+      if (ytId) {
+        previewPlaceholder.classList.add('hidden');
+        playerWrapper.classList.remove('hidden');
+        playerWrapper.innerHTML = `<iframe class="w-full h-full rounded-xl" src="https://www.youtube-nocookie.com/embed/${ytId}?rel=0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        previewStatusBadge.innerText = 'YouTube Connected';
+        previewStatusBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20';
+        previewMeta.classList.remove('hidden');
+        metaVideoId.innerText = ytId;
+      } else {
+        // Direct file or local URL
+        previewPlaceholder.classList.add('hidden');
+        playerWrapper.classList.remove('hidden');
+        playerWrapper.innerHTML = `<video class="w-full h-full rounded-xl object-contain bg-black" src="${url}" controls preload="metadata"></video>`;
+        previewStatusBadge.innerText = 'Direct Video Link';
+        previewStatusBadge.className = 'text-[11px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        previewMeta.classList.remove('hidden');
+        metaVideoId.innerText = url.split('/').pop().substring(0, 20);
+      }
+    }
+
+    function setSampleUrl(url) {
+      document.getElementById('videoUrlInput').value = url;
+      onUrlChanged();
+    }
+
+    async function pasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        document.getElementById('videoUrlInput').value = text;
+        onUrlChanged();
+        showToast('Pasted URL from clipboard');
+      } catch (e) {
+        showToast('Could not access clipboard directly', 'error');
+      }
+    }
+
+    function clearUrlInput() {
+      document.getElementById('videoUrlInput').value = '';
+      onUrlChanged();
+    }
+
+    // --- GENERATION PIPELINE ---
+    async function startGeneration() {
+      const url = document.getElementById('videoUrlInput').value.trim();
+      if (!url) {
+        showToast('Please enter a YouTube video URL first', 'error');
+        document.getElementById('videoUrlInput').focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnGenerate');
+      btn.disabled = true;
+
+      const payload = {
+        url: url,
+        mode: currentMode,
+        num_clips: currentClipsCount,
+        aspect_ratio: document.getElementById('selectAspectRatio').value,
+        format: document.getElementById('selectResolution').value,
+      };
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to start generation');
+
+        activeJobId = data.job_id;
+        showToast(`Job queued: ${activeJobId}`);
+        setupJobTracker(activeJobId);
+      } catch (err) {
+        showToast(err.message, 'error');
+        btn.disabled = false;
+      }
+    }
+
+    function setupJobTracker(jobId) {
+      const sectionProgress = document.getElementById('sectionJobProgress');
+      const sectionResults = document.getElementById('sectionResults');
+      sectionProgress.classList.remove('hidden');
+      sectionResults.classList.add('hidden');
+      document.getElementById('jobIdBadge').innerText = jobId;
+      document.getElementById('consoleTerminal').innerHTML = '';
+
+      jobStartTime = Date.now();
+      if (jobPollTimer) clearInterval(jobPollTimer);
+      jobPollTimer = setInterval(() => pollJobStatus(jobId), 1500);
+
+      // Scroll to tracker
+      sectionProgress.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function pollJobStatus(jobId) {
+      // Update elapsed timer
+      if (jobStartTime) {
+        const elapsedSec = Math.floor((Date.now() - jobStartTime) / 1000);
+        const mins = String(Math.floor(elapsedSec / 60)).padStart(2, '0');
+        const secs = String(elapsedSec % 60).padStart(2, '0');
+        document.getElementById('elapsedTimer').innerText = `${mins}:${secs} elapsed`;
+      }
+
+      try {
+        const res = await fetch(`/api/jobs/${jobId}`);
+        if (!res.ok) return;
+        const job = await res.json();
+
+        // Update progress bar & percent
+        const percent = job.progress || 0;
+        document.getElementById('progressPercent').innerText = `${percent}%`;
+        document.getElementById('progressBarFill').style.width = `${percent}%`;
+
+        // Update stages
+        updatePipelineStages(job.stage);
+
+        // Update logs console
+        if (job.logs && job.logs.length) {
+          const consoleBox = document.getElementById('consoleTerminal');
+          consoleBox.innerHTML = job.logs.map(l => `<div class="leading-relaxed hover:bg-dark-900/50 px-1 rounded">${escapeHtml(l)}</div>`).join('');
+          if (document.getElementById('chkAutoScroll').checked) {
+            consoleBox.scrollTop = consoleBox.scrollHeight;
+          }
+        }
+
+        // Check completion or error
+        if (job.status === 'completed') {
+          clearInterval(jobPollTimer);
+          document.getElementById('btnGenerate').disabled = false;
+          showToast('Shorts generation completed! 🎉');
+          displayResults(job);
+          loadHistory();
+        } else if (job.status === 'failed') {
+          clearInterval(jobPollTimer);
+          document.getElementById('btnGenerate').disabled = false;
+          showToast(`Job failed: ${job.error}`, 'error');
+          document.getElementById('jobStatusSubtitle').innerText = `Error: ${job.error}`;
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }
+
+    function updatePipelineStages(stage) {
+      const steps = ['Download', 'Whisper', 'Llm', 'Crop', 'Complete'];
+      const stagesOrder = ['downloading', 'transcribing', 'analyzing_virality', 'rendering_shorts', 'completed'];
+      const activeIdx = stagesOrder.indexOf(stage);
+
+      steps.forEach((s, idx) => {
+        const el = document.getElementById(`step${s}`);
+        if (idx <= activeIdx) {
+          el.className = 'p-2.5 rounded-xl border border-brand-500 bg-brand-600/20 text-brand-300 font-bold';
+        } else {
+          el.className = 'p-2.5 rounded-xl border border-dark-700 bg-dark-900 text-slate-500';
+        }
+      });
+    }
+
+    function clearConsoleLogs() {
+      document.getElementById('consoleTerminal').innerHTML = '';
+    }
+
+    // --- DISPLAY RESULTS SHOWCASE ---
+    function displayResults(job) {
+      const sectionResults = document.getElementById('sectionResults');
+      const shortsGrid = document.getElementById('shortsGrid');
+      sectionResults.classList.remove('hidden');
+
+      const shorts = (job.result && job.result.shorts) || [];
+      document.getElementById('resultsSubtitle').innerText = `${shorts.length} clips generated in ${job.duration || 0}s`;
+
+      shortsGrid.innerHTML = shorts.map((s, idx) => renderShortCard(s, idx + 1)).join('');
+      sectionResults.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderShortCard(short, index) {
+      const videoSrc = short.web_url || short.clip_url || '';
+      const score = short.score || 85;
+      const title = short.title || `Short #${index}`;
+      const hook = short.hook_sentence || 'No hook detected';
+      const startT = short.start_time ? short.start_time.toFixed(1) : '0';
+      const endT = short.end_time ? short.end_time.toFixed(1) : '0';
+      const duration = (short.end_time && short.start_time) ? Math.round(short.end_time - short.start_time) : 30;
+
+      // Virality Score Color
+      let scoreColor = 'from-amber-500 to-orange-600 text-amber-100';
+      if (score >= 90) scoreColor = 'from-emerald-500 to-teal-600 text-emerald-100';
+      else if (score >= 80) scoreColor = 'from-brand-500 to-indigo-600 text-brand-100';
+
+      return `
+        <div class="glass-card rounded-2xl p-5 shadow-2xl flex flex-col space-y-4 border border-dark-700/60 hover:border-brand-500/50 transition-all">
+          
+          <!-- Top Badges -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-dark-900 text-slate-300 border border-dark-700">
+              #${index} • ${duration}s
+            </span>
+            <div class="px-2.5 py-1 rounded-lg font-mono text-xs font-black bg-gradient-to-r ${scoreColor} shadow-md">
+              ⚡ ${score}/100 Score
+            </div>
+          </div>
+
+          <!-- Video Player (Framed to 9:16 vertical ratio) -->
+          <div class="relative w-full aspect-[9/16] max-h-[460px] bg-black rounded-xl overflow-hidden shadow-inner border border-dark-800 flex items-center justify-center">
+            ${videoSrc ? `
+              <video 
+                src="${videoSrc}" 
+                controls 
+                preload="metadata" 
+                playsinline 
+                class="w-full h-full object-contain"
+              ></video>
+            ` : `
+              <div class="text-xs text-slate-500 p-4 text-center">Video rendering failed or not available</div>
+            `}
+          </div>
+
+          <!-- Details & Hook -->
+          <div class="space-y-2 flex-1">
+            <h3 class="font-extrabold text-sm text-white line-clamp-2 leading-snug">${escapeHtml(title)}</h3>
+            
+            <div class="p-3 rounded-xl bg-dark-900/80 border border-dark-800 text-xs text-slate-300">
+              <span class="text-brand-400 font-bold block mb-1">🪝 Hook:</span>
+              <p class="italic text-slate-200">"${escapeHtml(hook)}"</p>
+            </div>
+
+            <div class="flex items-center justify-between text-[11px] font-mono text-slate-400 pt-1">
+              <span>Time: ${startT}s → ${endT}s</span>
+              <span class="text-slate-500">${short.filename || ''}</span>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="pt-3 border-t border-dark-800 flex items-center gap-2">
+            ${videoSrc ? `
+              <a 
+                href="${videoSrc}" 
+                download 
+                class="flex-1 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs uppercase tracking-wider text-center transition flex items-center justify-center gap-1.5 shadow-md shadow-brand-600/20"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Download MP4
+              </a>
+              <button 
+                onclick="copyToClipboard('${window.location.origin}${videoSrc}')" 
+                class="p-2 rounded-xl bg-dark-800 hover:bg-dark-700 text-slate-300 border border-dark-700 transition" 
+                title="Copy Direct Link"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              </button>
+            ` : ''}
+          </div>
+
+        </div>
+      `;
+    }
+
+    // --- LIBRARY & HISTORY ---
+    async function loadHistory() {
+      try {
+        const res = await fetch('/api/history');
+        const data = await res.json();
+        const history = data.history || [];
+        document.getElementById('badgeLibraryCount').innerText = history.length;
+
+        const container = document.getElementById('libraryContainer');
+        if (history.length === 0) {
+          container.innerHTML = `
+            <div class="col-span-full py-16 text-center text-slate-500 space-y-2">
+              <svg class="w-12 h-12 mx-auto stroke-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+              <p class="text-sm">No historical shorts found yet.</p>
+              <button onclick="switchTab('studio')" class="text-xs text-brand-400 hover:underline">Generate your first batch →</button>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = history.map(job => {
+          const shorts = (job.result && job.result.shorts) || [];
+          const dateStr = new Date((job.created_at || Date.now()) * 1000).toLocaleString();
+          return `
+            <div class="glass-card rounded-2xl p-5 shadow-xl space-y-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-dark-900 text-slate-400 border border-dark-800">${job.id}</span>
+                <span class="text-xs text-slate-500">${dateStr}</span>
+              </div>
+              <div>
+                <div class="text-xs text-slate-400 truncate">URL: <span class="text-slate-200 font-mono">${escapeHtml(job.params?.url || '')}</span></div>
+                <div class="text-xs font-semibold text-brand-400 mt-1">${shorts.length} Short(s) Generated</div>
+              </div>
+              <div class="space-y-2">
+                ${shorts.map((s, idx) => `
+                  <div class="flex items-center justify-between text-xs p-2 rounded-lg bg-dark-900 border border-dark-800">
+                    <span class="truncate max-w-[200px] text-slate-300 font-medium">#${idx+1} ${escapeHtml(s.title || 'Untitled')}</span>
+                    ${s.web_url ? `
+                      <a href="${s.web_url}" download class="text-brand-400 hover:underline font-mono">Download</a>
+                    ` : '<span class="text-slate-500">N/A</span>'}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error('Failed to load history:', err);
+      }
+    }
+
+    // --- CONFIG & SETTINGS ---
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const cfg = await res.json();
+        if (cfg.LLM_PROVIDER) {
+          const radio = document.querySelector(`input[name="llm_provider"][value="${cfg.LLM_PROVIDER}"]`);
+          if (radio) radio.checked = true;
+        }
+        if (cfg.LOCAL_WHISPER_MODEL) {
+          document.getElementById('selectWhisperModel').value = cfg.LOCAL_WHISPER_MODEL;
+        }
+        if (cfg.has_openai_key) {
+          document.getElementById('inputOpenAiKey').placeholder = `Configured (${cfg.openai_key_preview})`;
+        }
+        if (cfg.has_gemini_key) {
+          document.getElementById('inputGeminiKey').placeholder = `Configured (${cfg.gemini_key_preview})`;
+        }
+        if (cfg.has_muapi_key) {
+          document.getElementById('inputMuApiKey').placeholder = `Configured (${cfg.muapi_key_preview})`;
+        }
+      } catch (err) {
+        console.error('Error loading config:', err);
+      }
+    }
+
+    async function saveSettings(e) {
+      e.preventDefault();
+      const provider = document.querySelector('input[name="llm_provider"]:checked')?.value || 'openai';
+      const openaiKey = document.getElementById('inputOpenAiKey').value.trim();
+      const geminiKey = document.getElementById('inputGeminiKey').value.trim();
+      const muapiKey = document.getElementById('inputMuApiKey').value.trim();
+      const whisperModel = document.getElementById('selectWhisperModel').value;
+
+      const body = {
+        LLM_PROVIDER: provider,
+        LOCAL_WHISPER_MODEL: whisperModel,
+      };
+      if (openaiKey) body.OPENAI_API_KEY = openaiKey;
+      if (geminiKey) body.GEMINI_API_KEY = geminiKey;
+      if (muapiKey) body.MUAPI_API_KEY = muapiKey;
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('Save failed');
+        const msg = document.getElementById('saveStatusMsg');
+        msg.classList.remove('hidden');
+        setTimeout(() => msg.classList.add('hidden'), 3500);
+        showToast('Settings saved successfully!');
+        loadConfig();
+      } catch (err) {
+        showToast('Failed to save settings', 'error');
+      }
+    }
+
+    // --- SYSTEM STATUS ---
+    async function checkServerStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const st = await res.json();
+        document.getElementById('serverStatusText').innerText = `Active (FFmpeg: ${st.ffmpeg_available ? 'OK' : 'Missing'})`;
+      } catch (e) {
+        document.getElementById('serverStatusText').innerText = 'Offline';
+      }
+    }
+
+    // --- HELPERS ---
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const isError = type === 'error';
+      toast.className = `px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold pointer-events-auto transition-all transform translate-y-2 opacity-0 flex items-center gap-2 border ${
+        isError ? 'bg-red-950/90 text-red-200 border-red-500/30' : 'bg-dark-900/95 text-slate-100 border-dark-700'
+      }`;
+      toast.innerHTML = `<span>${isError ? '⚠️' : '✨'}</span> <span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 10);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      showToast('Link copied to clipboard!');
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      checkServerStatus();
+      loadHistory();
+      loadConfig();
+    });
+  </script>
+</body>
+</html>

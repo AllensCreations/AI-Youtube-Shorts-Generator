@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# AI - Unified CLI and Web Studio Runner for AI-Youtube-Shorts-Generator
+
+set -e
+
+# Resolve repository directory
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+
+# If invoked from /usr/local/bin/AI or elsewhere, locate the installed project repo
+if [ ! -f "$SCRIPT_DIR/server.py" ]; then
+    if [ -f "$HOME/AI-Youtube-Shorts-Generator/server.py" ]; then
+        SCRIPT_DIR="$HOME/AI-Youtube-Shorts-Generator"
+    elif [ -f "/root/AI-Youtube-Shorts-Generator/server.py" ]; then
+        SCRIPT_DIR="/root/AI-Youtube-Shorts-Generator"
+    else
+        echo "Error: Could not locate AI-Youtube-Shorts-Generator directory." >&2
+        exit 1
+    fi
+fi
+
+# Locate Python in virtual environment
+VENV_PYTHON="$SCRIPT_DIR/venv/bin/python3"
+if [ ! -x "$VENV_PYTHON" ]; then
+    if command -v python3 >/dev/null 2>&1; then
+        VENV_PYTHON="$(command -v python3)"
+    else
+        echo "Error: Python 3 not found. Please run install.sh" >&2
+        exit 1
+    fi
+fi
+
+# Help menu
+show_help() {
+    cat << 'EOF'
+===================================================================
+  🎬 AI YouTube Shorts Generator — Admin CLI & Studio
+===================================================================
+
+Web Dashboard:
+  AI --run                  Launch the Admin Overview UI on localhost:5000
+  AI --run --port 8080      Launch on a custom port
+  AI --run --host 0.0.0.0   Allow external access
+
+Terminal CLI:
+  AI "<youtube_url>" [flags]
+  
+  Flags:
+    --mode {api,local}      Processing mode (default: local)
+    --num-clips <int>       Number of shorts to render (default: 3)
+    --aspect-ratio <w:h>    Output aspect ratio (default: 9:16)
+    --format <res>          Source resolution: 360/480/720/1080 (default: 720)
+    --language <lang>       Force Whisper language (default: auto)
+    --output-json <path>    Write output JSON to path
+
+Examples:
+  AI --run
+  AI "https://www.youtube.com/watch?v=kT1CO4BYV3A" --num-clips 3
+===================================================================
+EOF
+}
+
+# Handle commands
+case "$1" in
+    --run|-r|run)
+        shift
+        echo "Starting AI Shorts Studio Web Overview..."
+        exec "$VENV_PYTHON" "$SCRIPT_DIR/server.py" "$@"
+        ;;
+    --help|-h|help|"")
+        if [ "$#" -eq 0 ]; then
+            show_help
+            exit 0
+        fi
+        show_help
+        exit 0
+        ;;
+    *)
+        exec "$VENV_PYTHON" "$SCRIPT_DIR/main.py" "$@"
+        ;;
+esac
