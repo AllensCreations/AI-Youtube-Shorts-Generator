@@ -29,6 +29,8 @@ def call_openai_llm(prompt: str) -> str:
 
 def call_gemini_llm(prompt: str) -> str:
     """Gemini backend used by --mode local when LLM_PROVIDER=gemini."""
+    import time
+
     try:
         from google import genai  # type: ignore
     except ImportError as e:
@@ -38,16 +40,27 @@ def call_gemini_llm(prompt: str) -> str:
         ) from e
 
     client = genai.Client(api_key=require_gemini_key())
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-        config={
-            "temperature": 0.2,
-            "response_mime_type": "application/json",
-            "max_output_tokens": 8192,
-        },
-    )
-    return response.text or ""
+    for attempt in range(5):
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=prompt,
+                config={
+                    "temperature": 0.2,
+                    "response_mime_type": "application/json",
+                    "max_output_tokens": 8192,
+                },
+            )
+            return response.text or ""
+        except Exception as e:
+            err_str = str(e)
+            if attempt < 4 and any(code in err_str for code in ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED")):
+                delay = 3 * (attempt + 1)
+                print(f"[llm/gemini] API busy or high demand ({err_str[:40]}...), retrying in {delay}s...", flush=True)
+                time.sleep(delay)
+                continue
+            raise
+    return ""
 
 
 def call_local_llm(prompt: str) -> str:

@@ -66,7 +66,14 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
     crop_w = max(2, crop_w - (crop_w % 2))
     crop_h = max(2, crop_h - (crop_h % 2))
 
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    face_cascade = None
+    if hasattr(cv2, "CascadeClassifier") and hasattr(cv2, "data") and hasattr(cv2.data, "haarcascades"):
+        cascade_file = os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml")
+        if os.path.exists(cascade_file):
+            try:
+                face_cascade = cv2.CascadeClassifier(cascade_file)
+            except Exception:
+                face_cascade = None
 
     silent_path = out_path + ".silent.mp4"
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -79,21 +86,25 @@ def _reframe_vertical(in_path: str, out_path: str, aspect_ratio: str) -> str:
         if not ret:
             break
 
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
-        if len(faces) > 0:
-            # Pick the largest face — usually the speaker.
-            x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
-            cx = x + w // 2
-            cy = y + h // 2
-            if last_center is None:
-                last_center = (cx, cy)
-            else:
-                lx, ly = last_center
-                last_center = (
-                    int(lx + (cx - lx) * smoothing),
-                    int(ly + (cy - ly) * smoothing),
-                )
+        if face_cascade is not None:
+            try:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40))
+                if len(faces) > 0:
+                    # Pick the largest face — usually the speaker.
+                    x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
+                    cx = x + w // 2
+                    cy = y + h // 2
+                    if last_center is None:
+                        last_center = (cx, cy)
+                    else:
+                        lx, ly = last_center
+                        last_center = (
+                            int(lx + (cx - lx) * smoothing),
+                            int(ly + (cy - ly) * smoothing),
+                        )
+            except Exception:
+                pass
         if last_center is None:
             last_center = (src_w // 2, src_h // 2)
 

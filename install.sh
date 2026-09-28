@@ -80,6 +80,8 @@ fi
 if [ -f "$INSTALL_DIR/requirements-local.txt" ]; then
     "$VENV_PIP" install -q -r "$INSTALL_DIR/requirements-local.txt"
 fi
+# Remove hf-xet if pulled in by huggingface_hub, as it throttles downloads on Linux/ARM
+"$VENV_PIP" uninstall -y hf-xet >/dev/null 2>&1 || true
 echo -e "${GREEN}✓ Python packages installed successfully.${RESET}"
 
 # 4. Configuration .env

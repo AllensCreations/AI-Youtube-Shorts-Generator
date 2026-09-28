@@ -79,6 +79,10 @@ def load_env_vars() -> Dict[str, str]:
     return env_data
 
 
+ORIG_STDOUT = sys.__stdout__ or sys.stdout
+ORIG_STDERR = sys.__stderr__ or sys.stderr
+
+
 def save_env_vars(updates: Dict[str, str]) -> None:
     """Save updated keys to .env and refresh os.environ."""
     current_lines: List[str] = []
@@ -118,11 +122,9 @@ class JobLogger:
     def __init__(self, job_id: str, job_dict: Dict[str, Any]):
         self.job_id = job_id
         self.job_dict = job_dict
-        self._real_stdout = sys.stdout
-        self._real_stderr = sys.stderr
 
     def write(self, message: str) -> None:
-        self._real_stdout.write(message)
+        ORIG_STDOUT.write(message)
         if not message:
             return
         lines = message.splitlines()
@@ -130,26 +132,30 @@ class JobLogger:
         with jobs_lock:
             for line in lines:
                 clean_line = line.strip()
-                if clean_line:
-                    log_entry = f"[{now_str}] {clean_line}"
-                    self.job_dict["logs"].append(log_entry)
-                    # Automatically update progress stage based on log output
-                    lower = clean_line.lower()
-                    if "download" in lower:
-                        self.job_dict["stage"] = "downloading"
-                        self.job_dict["progress"] = max(self.job_dict["progress"], 20)
-                    elif "whisper" in lower or "transcrib" in lower:
-                        self.job_dict["stage"] = "transcribing"
-                        self.job_dict["progress"] = max(self.job_dict["progress"], 45)
-                    elif "highlight" in lower or "llm" in lower:
-                        self.job_dict["stage"] = "analyzing_virality"
-                        self.job_dict["progress"] = max(self.job_dict["progress"], 70)
-                    elif "crop" in lower or "clip" in lower:
-                        self.job_dict["stage"] = "rendering_shorts"
-                        self.job_dict["progress"] = max(self.job_dict["progress"], 85)
+                if not clean_line:
+                    continue
+                # Exclude HTTP request logs from job execution terminal
+                if re.search(r'"(GET|POST|HEAD|OPTIONS|DELETE)\s+', clean_line) or "HTTP/1." in clean_line:
+                    continue
+                log_entry = f"[{now_str}] {clean_line}"
+                self.job_dict["logs"].append(log_entry)
+                # Automatically update progress stage based on log output
+                lower = clean_line.lower()
+                if "download" in lower:
+                    self.job_dict["stage"] = "downloading"
+                    self.job_dict["progress"] = max(self.job_dict["progress"], 20)
+                elif "whisper" in lower or "transcrib" in lower:
+                    self.job_dict["stage"] = "transcribing"
+                    self.job_dict["progress"] = max(self.job_dict["progress"], 45)
+                elif "highlight" in lower or "llm" in lower:
+                    self.job_dict["stage"] = "analyzing_virality"
+                    self.job_dict["progress"] = max(self.job_dict["progress"], 70)
+                elif "crop" in lower or "clip" in lower:
+                    self.job_dict["stage"] = "rendering_shorts"
+                    self.job_dict["progress"] = max(self.job_dict["progress"], 85)
 
     def flush(self) -> None:
-        self._real_stdout.flush()
+        ORIG_STDOUT.flush()
 
 
 def run_job_worker(job_id: str) -> None:
@@ -271,9 +277,9 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: Any) -> None:
         try:
             msg = format % args
-            if "/api/jobs/" in msg or "/api/status" in msg:
+            if "/api/jobs/" in msg or "/api/status" in msg or "/api/history" in msg:
                 return
-            sys.stderr.write(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}\n")
+            ORIG_STDERR.write(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}\n")
         except Exception:
             pass
 
@@ -368,7 +374,7 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
             safe_config = {
                 "LLM_PROVIDER": env.get("LLM_PROVIDER", "openai"),
                 "OPENAI_MODEL": env.get("OPENAI_MODEL", "gpt-4o-mini"),
-                "GEMINI_MODEL": env.get("GEMINI_MODEL", "gemini-2.5-flash"),
+                "GEMINI_MODEL": env.get("GEMINI_MODEL", "gemini-3.8-flash"),
                 "LOCAL_WHISPER_MODEL": env.get("LOCAL_WHISPER_MODEL", "base"),
                 "LOCAL_WHISPER_DEVICE": env.get("LOCAL_WHISPER_DEVICE", "auto"),
                 "has_openai_key": bool(env.get("OPENAI_API_KEY")),
@@ -434,6 +440,22 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
             body = json.loads(post_data.decode("utf-8")) if post_data else {}
         except Exception:
             self.send_error_json("Invalid JSON body", status=400)
+            return
+
+        # API: Cancel Job
+        if path.startswith("/api/jobs/") and path.endswith("/cancel"):
+            job_id = path[len("/api/jobs/") : -len("/cancel")].strip()
+            with jobs_lock:
+                job = active_jobs.get(job_id)
+                if job:
+                    job["status"] = "cancelled"
+                    job["stage"] = "cancelled"
+                    job["error"] = "Job cancelled by user"
+                    job["finished_at"] = time.time()
+                    job["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Job cancelled by user.")
+                    self.send_json({"status": "cancelled", "job_id": job_id})
+                    return
+            self.send_error_json("Job not found", status=404)
             return
 
         # API: Update Config

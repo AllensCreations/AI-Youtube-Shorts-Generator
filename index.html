@@ -292,8 +292,16 @@
             <p id="jobStatusSubtitle" class="text-xs text-slate-400 mt-1">Downloading audio stream & transcribing segments...</p>
           </div>
 
-          <!-- Progress Percentage & Stage -->
+          <!-- Progress Percentage & Stage & Cancel Button -->
           <div class="flex items-center gap-4">
+            <button
+              type="button"
+              onclick="cancelCurrentJob()"
+              class="px-3 py-1.5 rounded-xl border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-bold transition flex items-center gap-1.5"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              Cancel Job
+            </button>
             <div class="text-right">
               <div id="progressPercent" class="text-2xl font-black font-mono text-brand-400">0%</div>
               <div id="elapsedTimer" class="text-[11px] font-mono text-slate-500">00:00 elapsed</div>
@@ -426,7 +434,7 @@
                 <input type="radio" name="llm_provider" value="gemini" class="text-brand-600 focus:ring-brand-500">
                 <div>
                   <div class="text-xs font-bold text-slate-200">Google Gemini</div>
-                  <div class="text-[10px] text-slate-400">Gemini 2.5 Flash</div>
+                  <div class="text-[10px] text-slate-400">Gemini 3.8 Flash</div>
                 </div>
               </label>
             </div>
@@ -489,6 +497,7 @@
     let activeJobId = null;
     let jobPollTimer = null;
     let jobStartTime = null;
+    let currentConfig = null;
 
     // --- TAB SWITCHING ---
     function switchTab(tab) {
@@ -615,6 +624,15 @@
         return;
       }
 
+      if (currentMode === 'local') {
+        const hasKey = currentConfig && (currentConfig.has_openai_key || currentConfig.has_gemini_key);
+        if (!hasKey) {
+          showToast('⚠️ Local Mode requires an OpenAI or Gemini API key for highlight ranking. Please enter your key in Settings.', 'error');
+          switchTab('settings');
+          return;
+        }
+      }
+
       const btn = document.getElementById('btnGenerate');
       btn.disabled = true;
 
@@ -703,9 +721,30 @@
           document.getElementById('btnGenerate').disabled = false;
           showToast(`Job failed: ${job.error}`, 'error');
           document.getElementById('jobStatusSubtitle').innerText = `Error: ${job.error}`;
+        } else if (job.status === 'cancelled') {
+          clearInterval(jobPollTimer);
+          document.getElementById('btnGenerate').disabled = false;
+          showToast('Job cancelled by user.');
+          document.getElementById('jobStatusSubtitle').innerText = 'Job was cancelled.';
         }
       } catch (err) {
         console.error('Polling error:', err);
+      }
+    }
+
+    async function cancelCurrentJob() {
+      if (!activeJobId) return;
+      if (!confirm('Are you sure you want to cancel the active job?')) return;
+      try {
+        const res = await fetch(`/api/jobs/${activeJobId}/cancel`, { method: 'POST' });
+        if (res.ok) {
+          clearInterval(jobPollTimer);
+          document.getElementById('btnGenerate').disabled = false;
+          showToast('Job cancelled.');
+          document.getElementById('jobStatusSubtitle').innerText = 'Job was cancelled.';
+        }
+      } catch (err) {
+        showToast('Failed to cancel job', 'error');
       }
     }
 
@@ -879,6 +918,7 @@
       try {
         const res = await fetch('/api/config');
         const cfg = await res.json();
+        currentConfig = cfg;
         if (cfg.LLM_PROVIDER) {
           const radio = document.querySelector(`input[name="llm_provider"][value="${cfg.LLM_PROVIDER}"]`);
           if (radio) radio.checked = true;
