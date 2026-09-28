@@ -283,18 +283,27 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
         except Exception:
             pass
 
+    def handle(self) -> None:
+        try:
+            super().handle()
+        except (ConnectionResetError, BrokenPipeError):
+            pass
+
     def do_HEAD(self) -> None:
         self.do_GET()
 
     def send_json(self, data: Any, status: int = 200) -> None:
-        body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.end_headers()
-        if self.command != "HEAD":
-            self.wfile.write(body)
+        try:
+            body = json.dumps(data, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            if self.command != "HEAD":
+                self.wfile.write(body)
+        except (ConnectionResetError, BrokenPipeError):
+            pass
 
     def send_error_json(self, message: str, status: int = 400) -> None:
         self.send_json({"error": message, "status": "error"}, status=status)
@@ -319,12 +328,15 @@ class StudioRequestHandler(BaseHTTPRequestHandler):
             if index_path.exists():
                 with open(index_path, "rb") as f:
                     content = f.read()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(content)))
-                self.end_headers()
-                if self.command != "HEAD":
-                    self.wfile.write(content)
+                try:
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(content)))
+                    self.end_headers()
+                    if self.command != "HEAD":
+                        self.wfile.write(content)
+                except (ConnectionResetError, BrokenPipeError):
+                    pass
                 return
             else:
                 self.send_error_json("index.html not found", status=404)

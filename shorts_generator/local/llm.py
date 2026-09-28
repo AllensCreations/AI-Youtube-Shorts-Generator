@@ -64,12 +64,26 @@ def call_gemini_llm(prompt: str) -> str:
 
 
 def call_local_llm(prompt: str) -> str:
-    """Dispatch to the configured local LLM provider."""
-    provider = (LLM_PROVIDER or "openai").strip().lower()
-    if provider == "openai":
-        return call_openai_llm(prompt)
+    """Dispatch to the configured local LLM provider with intelligent fallback."""
+    provider = (LLM_PROVIDER or "gemini").strip().lower()
     if provider == "gemini":
-        return call_gemini_llm(prompt)
+        try:
+            return call_gemini_llm(prompt)
+        except Exception as e:
+            from ..config import OPENAI_API_KEY
+            if OPENAI_API_KEY and OPENAI_API_KEY != "your_openai_key_here":
+                print(f"[llm/fallback] Gemini unavailable ({e}); switching to OpenAI...", flush=True)
+                return call_openai_llm(prompt)
+            raise
+    if provider == "openai":
+        try:
+            return call_openai_llm(prompt)
+        except Exception as e:
+            from ..config import GEMINI_API_KEY
+            if GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_key_here":
+                print(f"[llm/fallback] OpenAI unavailable ({e}); switching to Gemini...", flush=True)
+                return call_gemini_llm(prompt)
+            raise
     raise RuntimeError(
         f"Unknown LLM_PROVIDER={provider!r}. Use 'openai' or 'gemini'."
     )
